@@ -1,0 +1,40 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.hidden {
+    display: none;
+}
+
+.scrollpicker {
+    display: flex;
+}
+
+.scroll-column {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    scrollbar-width: none;
+    display: flex;
+    width: 50px;
+    height: 120px;
+    overflow-y: scroll;
+    word-break: break-all;
+    scroll-snap-type: y mandatory;
+}
+
+.scroll-item {
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    scroll-snap-align: center;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.selected {
+    font-weight: bold;
+}
