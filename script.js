@@ -1,6 +1,4 @@
-const { lastDayOfMonth, getDate } = dateFns;
-
-getDate
+const { lastDayOfMonth, getDate, getDay } = dateFns;
 
 const questions = [
   "What is your date of birth?",
@@ -12,9 +10,10 @@ const questions = [
 let qNo = 0;
 
 const input = document.querySelector("input[type='date']");
-const button = document.querySelector("button");
+const button = document.querySelector(".enter-btn");
 const questionDisplay = document.getElementById("question");
-const scrollPicker = document.getElementById("scroll-picker")
+const scrollPicker = document.getElementById("scroll-picker");
+const calenderPicker = document.getElementById("calendar-picker")
 
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -22,24 +21,57 @@ const monthsDisplay = document.getElementById("months");
 const yearsDisplay = document.getElementById("years");
 const daysDisplay = document.getElementById("days");
 
+const calDays = document.getElementById("dates");
+
+const pattern = [];
+
 let selectedMonth;
 let selectedYear;
 let selectedDay;
 
 document.getElementById("question").innerHTML = questions[qNo];
 
+for (let i = 0; i < questions.length/2; i++) {
+  pattern[i] = true;
+}
+
+
+for (let i = questions.length/2; i < questions.length; i++) {
+  pattern[i] = false;
+}
+
+for (let i = pattern.length - 1; i > 0; i--) { 
+  const j = Math.floor(Math.random() * (i + 1)); 
+  [pattern[i], pattern[j]] = [pattern[j], pattern[i]]; 
+} 
+
+function showPicker() {
+  if (pattern[qNo] === true) {
+    scrollPicker.classList.remove("hidden");
+    calenderPicker.classList.add("hidden");
+  } else {
+    scrollPicker.classList.add("hidden");
+    calenderPicker.classList.remove("hidden");
+  }
+}
+
+showPicker();
+
 function dateEnter() {
 
   qNo++
   setDateToday()
+
+  showPicker()
 
   if (qNo < questions.length) {
     questionDisplay.innerHTML = questions[qNo];
     input.value = "";
   } else {
     questionDisplay.innerHTML = "Thank you for participating in this quiz!";
-    button.classList.add("hidden");
     scrollPicker.classList.add("hidden");
+    calenderPicker.classList.add("hidden")
+    button.classList.add("hidden")
   }
 }
 
@@ -218,3 +250,98 @@ function setDateToday() {
   }, 10);
 }
 setDateToday();
+
+let cYear = today.getFullYear();
+let cMonth = today.getMonth();
+
+document.getElementById("calYear").innerHTML = cYear;
+document.getElementById("calMonth").innerHTML = months[cMonth];
+
+function prevYear() {
+  cYear --;
+  document.getElementById("calYear").innerHTML = cYear;
+  updateCDays();
+}
+
+function nextYear() {
+  cYear ++;
+  document.getElementById("calYear").innerHTML = cYear;
+  updateCDays();
+}
+
+function prevMonth(){
+  cMonth --;
+  if (cMonth < 0){
+    cMonth = 11;
+    cYear --;
+    document.getElementById("calYear").innerHTML =cYear;
+  }
+  document.getElementById("calMonth").innerHTML = months[cMonth];
+  updateCDays();
+}
+
+function nextMonth(){
+  cMonth ++;
+  if (cMonth > 11){
+    cMonth = 0;
+    cYear ++;
+    document.getElementById("calYear").innerHTML =cYear;
+  }
+  document.getElementById("calMonth").innerHTML = months[cMonth];
+  updateCDays();
+}
+
+let cSelectedDate = today;
+
+function updateCDays(){
+  let clastDay = getDate(lastDayOfMonth(new Date(cYear, cMonth)));
+  calDays.innerHTML = "";
+  console.log(clastDay);
+
+  for (let i = 1; i < clastDay + 1; i++) {
+    const calDay = document.createElement('div');
+    calDay.textContent = i;
+    calDay.className = "date-item";
+
+    if (
+      cSelectedDate &&
+      cSelectedDate.getFullYear() === cYear &&
+      cSelectedDate.getMonth() === cMonth &&
+      cSelectedDate.getDate() === i
+    ) {
+      calDay.classList.add('selected-date');
+    }
+
+    calDays.appendChild(calDay);
+  
+
+  calDay.addEventListener('click', function() {
+
+    document.querySelectorAll('.date-item').forEach(item => {
+      item.classList.remove('selected-date');
+    });
+
+    this.classList.add('selected-date');
+    
+    selectedDay = i;
+    selectedMonth = cMonth;
+    selectedYear = cYear;
+
+    cSelectedDate = new Date(selectedYear, selectedMonth, selectedDay);
+  });
+
+  calDays.appendChild(calDay);
+}
+
+
+  const firstDay = 7 - getDay(new Date(cYear, cMonth, 1))
+  for(let i = 0; i < firstDay; i++){
+    const padding = document.createElement('div');
+    padding.style.visibility = 'hidden';
+    calDays.prepend(padding);
+  }
+}
+
+updateCDays();
+
+console.log(getDay(new Date(cYear, cMonth, 1)))

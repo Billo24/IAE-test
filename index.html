@@ -8,28 +8,53 @@
 <div class="test">
     <h1>Question</h1>
     <h2 id="question">question here</h2>
+    
+    <!-- Scroll picker separated from calendar picker -->
     <div class="scrollpicker" id="scroll-picker">
-  <div class="scroll-column" id="day-column">
-    <div id="days"></div>
-  </div>
-  <div class="scroll-column" id="month-column">
-    <div id="months"></div>
-  </div>
-  <div class="scroll-column" id="year-column">
-    <div id="years"></div>
-  </div>
-    </div> 
-    <button onclick="dateEnter()">Enter</button>
-
+      <div class="scroll-column" id="day-column">
+        <div id="days"></div>
+      </div>
+      <div class="scroll-column" id="month-column">
+        <div id="months"></div>
+      </div>
+      <div class="scroll-column" id="year-column">
+        <div id="years"></div>
+      </div>
     </div>
     
-   
+    <!-- Calendar picker as a separate element -->
+    <div class="calendarpicker" id="calendar-picker">
+      <div class="selectors">
+        <div class="monthSelect">
+          <button onclick="prevMonth()">⬅️</button>
+          <p id="calMonth">month</p>
+          <button onclick="nextMonth()">➡️</button>
+        </div>
 
-<script src=" https://cdn.jsdelivr.net/npm/date-fns@4.1.0/cdn.min.js "></script>
-<script src="script.js" defer></script>
+        <div class="yearSelect">
+          <button onclick="prevYear()">⬅️</button>
+          <p id="calYear">year</p>
+          <button onclick="nextYear()">➡️</button>
+        </div>
+      </div>
+      
+      <div class="weekDays">
+        <p>Mon</p>
+        <p>Tue</p>
+        <p>Wed</p>
+        <p>Thu</p>
+        <p>Fri</p>
+        <p>Sat</p>
+        <p>Sun</p>
+      </div>
 
-
-</body>
+      <div id="dates"></div>
+    </div>
     
-
+    <button class="enter-btn" onclick="dateEnter()">Enter</button>
+</div>
+    
+<script src="https://cdn.jsdelivr.net/npm/date-fns@4.1.0/cdn.min.js"></script>
+<script src="script.js" defer></script>
+</body>
 </html>
