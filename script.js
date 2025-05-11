@@ -29,6 +29,9 @@ let selectedMonth;
 let selectedYear;
 let selectedDay;
 
+const today = new Date();
+let cSelectedDate = today;
+
 document.getElementById("question").innerHTML = questions[qNo];
 
 for (let i = 0; i < questions.length/2; i++) {
@@ -61,12 +64,12 @@ function dateEnter() {
 
   qNo++
   setDateToday()
+  setCalToday()
 
   showPicker()
 
   if (qNo < questions.length) {
     questionDisplay.innerHTML = questions[qNo];
-    input.value = "";
   } else {
     questionDisplay.innerHTML = "Thank you for participating in this quiz!";
     scrollPicker.classList.add("hidden");
@@ -148,7 +151,6 @@ for (let i = 1900; i < 2025 + 1; i++) {
 
 addPadding(yearsDisplay)
 
-const today = new Date();
 const defaultMonth = today.getMonth();
 const defaultYear = today.getFullYear();
 
@@ -248,8 +250,20 @@ function setDateToday() {
 
     scrollToValue(daysDisplay, selectedDay);
   }, 10);
+
+  cSelectedDate = today;
 }
 setDateToday();
+
+function setCalToday() {
+  cYear = today.getFullYear();
+  cMonth = today.getMonth();
+  
+  document.getElementById("calYear").innerHTML = cYear;
+  document.getElementById("calMonth").innerHTML = months[cMonth];
+  
+  updateCDays();
+}
 
 let cYear = today.getFullYear();
 let cMonth = today.getMonth();
@@ -291,12 +305,9 @@ function nextMonth(){
   updateCDays();
 }
 
-let cSelectedDate = today;
-
 function updateCDays(){
   let clastDay = getDate(lastDayOfMonth(new Date(cYear, cMonth)));
   calDays.innerHTML = "";
-  console.log(clastDay);
 
   for (let i = 1; i < clastDay + 1; i++) {
     const calDay = document.createElement('div');
@@ -344,4 +355,75 @@ function updateCDays(){
 
 updateCDays();
 
-console.log(getDay(new Date(cYear, cMonth, 1)))
+function clickScroll(thisDiv) {
+  let isDown = false;
+  let startY;
+  let scrollY;
+  let scrollSpeed = 1; // Adjust this value to control scroll sensitivity
+
+  function disableSnap() {
+    thisDiv.style.scrollSnapType = 'none';
+  }
+  
+  function enableSnap() {
+    thisDiv.style.scrollSnapType = 'y mandatory';
+    
+    // When snapping is re-enabled, update the selected value
+    if (thisDiv.id === "month-column") {
+      selectedMonth = selectCenter(thisDiv);
+      if (selectedYear) updateDays(selectedYear, selectedMonth);
+    } else if (thisDiv.id === "year-column") {
+      selectedYear = selectCenter(thisDiv);
+      if (selectedMonth) updateDays(selectedYear, selectedMonth);
+    } else if (thisDiv.id === "day-column") {
+      selectedDay = selectCenter(thisDiv);
+    }
+  }
+  
+  // Handle mousedown on the div
+  thisDiv.addEventListener('mousedown', (e) => {
+    isDown = true;
+    thisDiv.classList.add('active');
+    startY = e.pageY - thisDiv.offsetTop;
+    scrollY = thisDiv.scrollTop;
+    disableSnap();
+    
+    // Add event listeners to document for mouse movement and release
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  });
+  
+  // Remove the mouseleave handler as we'll handle scrolling globally
+  
+  // Handle document-wide mouseup
+  function handleMouseUp() {
+    if (!isDown) return;
+    
+    isDown = false;
+    thisDiv.classList.remove('active');
+    enableSnap();
+    
+    // Clean up global event listeners
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+  }
+  
+  // Handle document-wide mousemove
+  function handleMouseMove(e) {
+    if (!isDown) return;
+    
+    e.preventDefault();
+    const y = e.pageY;
+    
+    // Calculate the distance from the initial click
+    const distanceFromStart = y - (thisDiv.getBoundingClientRect().top + startY);
+    
+    // Apply scrolling with the calculated distance
+    thisDiv.scrollTop = scrollY - distanceFromStart * scrollSpeed;
+  }
+}
+
+// Apply to all scroll columns
+clickScroll(monthsColumn);
+clickScroll(daysColumn);
+clickScroll(yearsColumn);
