@@ -4,16 +4,20 @@ const questions = [
   "What is your date of birth?",
   "When did/will you graduate university?",
   "When did you last attend a live event?",
-  "When did you last travel somewhere far?"
+  "When did you last travel somewhere far?",
 ];
 
 let qNo = 0;
+let startTime; // Time when survey starts
+let questionStartTime; // Time when current question starts
+let questionTimes = []; // Array to store time spent on each question
 
 const input = document.querySelector("input[type='date']");
 const button = document.querySelector(".enter-btn");
 const questionDisplay = document.getElementById("question");
 const scrollPicker = document.getElementById("scroll-picker");
 const calenderPicker = document.getElementById("calendar-picker")
+const qheader = document.getElementById("head");
 
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -31,6 +35,13 @@ let selectedDay;
 
 const today = new Date();
 let cSelectedDate = today;
+
+// Hide all survey elements initially
+scrollPicker.classList.add("hidden");
+calenderPicker.classList.add("hidden");
+button.classList.add("hidden");
+questionDisplay.classList.add("hidden");
+qheader.classList.add("hidden");
 
 document.getElementById("question").innerHTML = questions[qNo];
 
@@ -58,23 +69,116 @@ function showPicker() {
   }
 }
 
-showPicker();
+// Create a results container to display timing information
+function createResultsContainer() {
+  const resultsContainer = document.createElement('div');
+  resultsContainer.id = 'results-container';
+  resultsContainer.className = 'results-container';
+  document.querySelector('.test').appendChild(resultsContainer);
+  return resultsContainer;
+}
+
+// Display results at the end of the survey
+function displayResults() {
+  const resultsContainer = createResultsContainer();
+  
+  // Calculate total time
+  const totalTime = questionTimes.reduce((sum, time) => sum + time, 0);
+  
+  // Create header
+  const header = document.createElement('h2');
+  header.textContent = 'Survey Timing Results';
+  resultsContainer.appendChild(header);
+  
+  // Create table
+  const table = document.createElement('table');
+  table.className = 'results-table';
+  
+  // Add table header
+  const tableHeader = document.createElement('thead');
+  tableHeader.innerHTML = `
+    <tr>
+      <th>Question</th>
+      <th>Input Type</th>
+      <th>Time (seconds)</th>
+    </tr>
+  `;
+  table.appendChild(tableHeader);
+  
+  // Add table body
+  const tableBody = document.createElement('tbody');
+  
+  // Add rows for each question
+  questions.forEach((question, index) => {
+    const row = document.createElement('tr');
+    const timeInSeconds = (questionTimes[index] / 1000).toFixed(2);
+    const inputType = pattern[index] ? "Scroll Picker" : "Calendar Picker";
+    
+    row.innerHTML = `
+      <td>${question}</td>
+      <td>${inputType}</td>
+      <td>${timeInSeconds}s</td>
+    `;
+    
+    tableBody.appendChild(row);
+  });
+  
+  // Add total time row
+  const totalRow = document.createElement('tr');
+  totalRow.className = 'total-row';
+  totalRow.innerHTML = `
+    <td><strong>Total Time</strong></td>
+    <td><strong>${(totalTime / 1000).toFixed(2)}s</strong></td>
+  `;
+  tableBody.appendChild(totalRow);
+  
+  table.appendChild(tableBody);
+  resultsContainer.appendChild(table);
+}
+
+// Function to start the survey
+function startSurvey() {
+  document.getElementById("start-screen").classList.add("hidden");
+  questionDisplay.classList.remove("hidden");
+  button.classList.remove("hidden");
+  qheader.classList.remove("hidden");
+  setCalToday();
+  setDateToday();
+  showPicker();
+  
+  // Start timing
+  startTime = new Date();
+  questionStartTime = new Date();
+}
+
+// Add event listener to start button
+document.getElementById("start-btn").addEventListener('click', startSurvey);
 
 function dateEnter() {
-
+  // Record time spent on current question
+  const currentTime = new Date();
+  const timeSpent = currentTime - questionStartTime;
+  questionTimes.push(timeSpent);
+  
   qNo++
   setDateToday()
   setCalToday()
-
+  
+  // Reset timer for next question
+  questionStartTime = new Date();
+  
   showPicker()
 
   if (qNo < questions.length) {
     questionDisplay.innerHTML = questions[qNo];
   } else {
-    questionDisplay.innerHTML = "Thank you for participating in this quiz!";
+    questionDisplay.innerHTML = "Thank you for participating in this test";
     scrollPicker.classList.add("hidden");
-    calenderPicker.classList.add("hidden")
-    button.classList.add("hidden")
+    calenderPicker.classList.add("hidden");
+    button.classList.add("hidden");
+    
+    // Display timing results
+    displayResults();
   }
 }
 
@@ -140,7 +244,7 @@ for (let i = 0; i < months.length; i++) {
 
 addPadding(monthsDisplay)
 
-for (let i = 1900; i < 2025 + 1; i++) {
+for (let i = 1900; i < 2050 + 1; i++) {
 
   const yearItem = document.createElement('div')
 
