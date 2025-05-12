@@ -11,6 +11,7 @@ let qNo = 0;
 let startTime; // Time when survey starts
 let questionStartTime; // Time when current question starts
 let questionTimes = []; // Array to store time spent on each question
+let currentQuestionType = []; // Array to store the picker type used for each question attempt
 
 const input = document.querySelector("input[type='date']");
 const button = document.querySelector(".enter-btn");
@@ -36,6 +37,9 @@ let selectedDay;
 const today = new Date();
 let cSelectedDate = today;
 
+// Keep track of which questions have been asked once already
+let secondAttempt = [];
+
 // Hide all survey elements initially
 scrollPicker.classList.add("hidden");
 calenderPicker.classList.add("hidden");
@@ -45,27 +49,27 @@ qheader.classList.add("hidden");
 
 document.getElementById("question").innerHTML = questions[qNo];
 
-for (let i = 0; i < questions.length/2; i++) {
-  pattern[i] = true;
+// Generate random pattern for the first attempt at each question
+for (let i = 0; i < questions.length; i++) {
+  // true means scroll picker, false means calendar picker
+  pattern[i] = Math.random() < 0.5;
+  // Initialize secondAttempt array to mark that we haven't asked any questions yet
+  secondAttempt[i] = false;
 }
-
-
-for (let i = questions.length/2; i < questions.length; i++) {
-  pattern[i] = false;
-}
-
-for (let i = pattern.length - 1; i > 0; i--) { 
-  const j = Math.floor(Math.random() * (i + 1)); 
-  [pattern[i], pattern[j]] = [pattern[j], pattern[i]]; 
-} 
 
 function showPicker() {
-  if (pattern[qNo] === true) {
+  // For first attempt, use the randomly generated pattern
+  // For second attempt, use the opposite picker
+  const useScrollPicker = secondAttempt[qNo] ? !pattern[qNo] : pattern[qNo];
+  
+  if (useScrollPicker) {
     scrollPicker.classList.remove("hidden");
     calenderPicker.classList.add("hidden");
+    currentQuestionType.push("Scroll Picker");
   } else {
     scrollPicker.classList.add("hidden");
     calenderPicker.classList.remove("hidden");
+    currentQuestionType.push("Calendar Picker");
   }
 }
 
@@ -108,26 +112,39 @@ function displayResults() {
   // Add table body
   const tableBody = document.createElement('tbody');
   
-  // Add rows for each question
-  questions.forEach((question, index) => {
-    const row = document.createElement('tr');
-    const timeInSeconds = (questionTimes[index] / 1000).toFixed(2);
-    const inputType = pattern[index] ? "Scroll Picker" : "Calendar Picker";
+  // Add rows for each question and each attempt
+  let rowIndex = 0;
+  for (let i = 0; i < questions.length; i++) {
+    // First attempt
+    const row1 = document.createElement('tr');
+    const timeInSeconds1 = (questionTimes[rowIndex] / 1000).toFixed(2);
     
-    row.innerHTML = `
-      <td>${question}</td>
-      <td>${inputType}</td>
-      <td>${timeInSeconds}s</td>
+    row1.innerHTML = `
+      <td>${questions[i]} (Attempt 1)</td>
+      <td>${currentQuestionType[rowIndex]}</td>
+      <td>${timeInSeconds1}s</td>
     `;
+    tableBody.appendChild(row1);
+    rowIndex++;
     
-    tableBody.appendChild(row);
-  });
+    // Second attempt
+    const row2 = document.createElement('tr');
+    const timeInSeconds2 = (questionTimes[rowIndex] / 1000).toFixed(2);
+    
+    row2.innerHTML = `
+      <td>${questions[i]} (Attempt 2)</td>
+      <td>${currentQuestionType[rowIndex]}</td>
+      <td>${timeInSeconds2}s</td>
+    `;
+    tableBody.appendChild(row2);
+    rowIndex++;
+  }
   
   // Add total time row
   const totalRow = document.createElement('tr');
   totalRow.className = 'total-row';
   totalRow.innerHTML = `
-    <td><strong>Total Time</strong></td>
+    <td colspan="2"><strong>Total Time</strong></td>
     <td><strong>${(totalTime / 1000).toFixed(2)}s</strong></td>
   `;
   tableBody.appendChild(totalRow);
@@ -160,26 +177,40 @@ function dateEnter() {
   const timeSpent = currentTime - questionStartTime;
   questionTimes.push(timeSpent);
   
-  qNo++
-  setDateToday()
-  setCalToday()
-  
-  // Reset timer for next question
-  questionStartTime = new Date();
-  
-  showPicker()
-
-  if (qNo < questions.length) {
-    questionDisplay.innerHTML = questions[qNo];
-  } else {
-    questionDisplay.innerHTML = "Thank you for participating in this test";
-    scrollPicker.classList.add("hidden");
-    calenderPicker.classList.add("hidden");
-    button.classList.add("hidden");
+  // Check if this was the first or second attempt for the current question
+  if (!secondAttempt[qNo]) {
+    // First attempt complete, now do second attempt with other picker
+    secondAttempt[qNo] = true;
     
-    // Display timing results
-    displayResults();
+    // Reset timer for second attempt
+    questionStartTime = new Date();
+    
+    // Show the other picker
+    showPicker();
+  } else {
+    // Second attempt complete, move to next question
+    qNo++;
+    
+    // Reset timer for next question
+    questionStartTime = new Date();
+    
+    if (qNo < questions.length) {
+      questionDisplay.innerHTML = questions[qNo];
+      showPicker();
+    } else {
+      questionDisplay.innerHTML = "Thank you for participating in this test";
+      scrollPicker.classList.add("hidden");
+      calenderPicker.classList.add("hidden");
+      button.classList.add("hidden");
+      
+      // Display timing results
+      displayResults();
+    }
   }
+  
+  // Reset date pickers for next use
+  setDateToday();
+  setCalToday();
 }
 
 function selectCenter(column) {
@@ -214,29 +245,20 @@ function selectCenter(column) {
   }
 }
 
-
-
 function addPadding(targetDiv) {
-
   const paddingTop = document.createElement('div');
-
   paddingTop.className = 'scroll-item';
   paddingTop.style.visibility = 'hidden'; // Invisible
-
   targetDiv.prepend(paddingTop);
 
   const paddingBottom = document.createElement('div');
-
   paddingBottom.className = 'scroll-item';
   paddingBottom.style.visibility = 'hidden'; // Invisible
-
   targetDiv.append(paddingBottom);
 }
 
 for (let i = 0; i < months.length; i++) {
-
   const monthItem = document.createElement('div');
-
   monthItem.className = 'scroll-item'
   monthItem.textContent = months[i];
   monthsDisplay.appendChild(monthItem);
@@ -245,9 +267,7 @@ for (let i = 0; i < months.length; i++) {
 addPadding(monthsDisplay)
 
 for (let i = 1900; i < 2050 + 1; i++) {
-
   const yearItem = document.createElement('div')
-
   yearItem.className = 'scroll-item';
   yearItem.textContent = i;
   yearsDisplay.appendChild(yearItem);
@@ -261,7 +281,6 @@ const defaultYear = today.getFullYear();
 updateDays(defaultYear, defaultMonth + 1);
 
 function updateDays(year, month) {
-
   const lastDay = getDate(lastDayOfMonth(new Date(year, month - 1)));
 
   let dayToSelect = selectedDay || 1;
@@ -274,12 +293,10 @@ function updateDays(year, month) {
 
   for (let i = 1; i <= lastDay; i++) {
     const dayItem = document.createElement('div');
-
     dayItem.className = 'scroll-item';
     dayItem.textContent = i;
 
     if (i === dayToSelect) {
-
       dayItem.classList.add('selected');
 
       setTimeout(() => {
@@ -314,13 +331,10 @@ daysColumn.addEventListener('scroll', () => {
 });
 
 function scrollToValue(container, value, behavior) {
-
   const items = container.querySelectorAll(".scroll-item");
-
   let foundItem = null;
 
   for (const item of items) {
-
     item.classList.remove("selected");
 
     if (item.textContent.trim() == value) {
@@ -330,7 +344,6 @@ function scrollToValue(container, value, behavior) {
   }
 
   if (foundItem) {
-
     setTimeout(() => {
       foundItem.scrollIntoView({ block: "center", behavior: behavior });
     }, 0);
@@ -341,7 +354,6 @@ function scrollToValue(container, value, behavior) {
 }
 
 function setDateToday() {
-  
   selectedYear = today.getFullYear();
   selectedMonth = today.getMonth();
 
@@ -349,9 +361,7 @@ function setDateToday() {
   scrollToValue(monthsColumn, months[selectedMonth]);
 
   setTimeout(() => {
-
     selectedDay = today.getDate();
-
     scrollToValue(daysDisplay, selectedDay);
   }, 10);
 
@@ -429,25 +439,22 @@ function updateCDays(){
 
     calDays.appendChild(calDay);
   
+    calDay.addEventListener('click', function() {
+      document.querySelectorAll('.date-item').forEach(item => {
+        item.classList.remove('selected-date');
+      });
 
-  calDay.addEventListener('click', function() {
+      this.classList.add('selected-date');
+      
+      selectedDay = i;
+      selectedMonth = cMonth;
+      selectedYear = cYear;
 
-    document.querySelectorAll('.date-item').forEach(item => {
-      item.classList.remove('selected-date');
+      cSelectedDate = new Date(selectedYear, selectedMonth, selectedDay);
     });
 
-    this.classList.add('selected-date');
-    
-    selectedDay = i;
-    selectedMonth = cMonth;
-    selectedYear = cYear;
-
-    cSelectedDate = new Date(selectedYear, selectedMonth, selectedDay);
-  });
-
-  calDays.appendChild(calDay);
-}
-
+    calDays.appendChild(calDay);
+  }
 
   const firstDay = 7 - getDay(new Date(cYear, cMonth, 1))
   for(let i = 0; i < firstDay; i++){

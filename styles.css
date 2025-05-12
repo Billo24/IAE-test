@@ -208,13 +208,12 @@
   margin-bottom: 15px;
 }
 
-/* Add a bit of spacing between scroll columns */
 .scroll-column {
   margin: 0 5px !important;
 }
 
 .active {
-  cursor: grabbing;
-  cursor: -webkit-grabbing;
+  cursor: grabbing !important;
+  cursor: -webkit-grabbing !important;
   font-size: 20px;
 }
